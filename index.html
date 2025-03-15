@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק זיכרון ארמית-עברית</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            direction: rtl;
+            padding: 20px;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .file-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .file-selector select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 300px;
+            font-size: 16px;
+        }
+        .game-container {
+            margin-top: 20px;
+        }
+        .card {
+            background-color: #3498db;
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 24px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        .card.flipped {
+            background-color: #2ecc71;
+        }
+        .card.correct {
+            background-color: #27ae60;
+        }
+        .card.incorrect {
+            background-color: #e74c3c;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            .card {
+                padding: 15px;
+                font-size: 20px;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>משחק זיכרון ארמית-עברית</h1>
+        
+        <div class="file-selector">
+            <select v-model="selectedFile" @change="loadWords">
+                <option value="">בחר קובץ מילים</option>
+                <option value="dic1.json">קובץ 1</option>
+                <option value="dic2.json">קובץ 2</option>
+                <option value="dic3.json">קובץ 3</option>
+                <option value="dic4.json">קובץ 4</option>
+                <option value="dic5.json">קובץ 5</option>
+                <option value="dic6.json">קובץ 6</option>
+            </select>
+        </div>
+        
+        <div class="game-container" v-if="gameStarted">
+            <div class="stats">
+                <div>מילים נכונות: {{ correctCount }} / {{ totalWords }}</div>
+                <div class="progress-bar">
+                    <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
+                </div>
+            </div>
+            
+            <div class="card" 
+                 :class="{ 'flipped': showAnswer, 'correct': lastResult === 'correct', 'incorrect': lastResult === 'incorrect' }"
+                 @click="toggleCard">
+                <div v-if="!showAnswer">{{ currentWord.aramic }}</div>
+                <div v-else>{{ currentWord.hebrew }}</div>
+            </div>
+            
+            <div class="controls">
+                <button @click="checkKnown(false)" :disabled="!gameStarted">לא ידעתי</button>
+                <button @click="nextWord" :disabled="!showAnswer">הבא</button>
+                <button @click="checkKnown(true)" :disabled="!gameStarted">ידעתי</button>
+            </div>
+        </div>
+        
+        <div v-else-if="selectedFile && words.length > 0" class="game-container">
+            <button @click="startGame">התחל משחק</button>
+        </div>
+        
+        <div v-else-if="selectedFile && words.length === 0" class="game-container">
+            <p>טוען מילים...</p>
+        </div>
+        
+        <div v-else class="game-container">
+            <p>בחר קובץ מילים כדי להתחיל</p>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                selectedFile: '',
+                words: [],
+                currentWordIndex: 0,
+                showAnswer: false,
+                gameStarted: false,
+                correctCount: 0,
+                incorrectCount: 0,
+                lastResult: null,
+                reviewWords: []
+            },
+            computed: {
+                currentWord() {
+                    return this.words.length > 0 && this.currentWordIndex < this.words.length 
+                        ? this.words[this.currentWordIndex] 
+                        : { aramic: '', hebrew: '' };
+                },
+                totalWords() {
+                    return this.words.length;
+                },
+                progressPercentage() {
+                    return this.totalWords > 0 
+                        ? Math.round(((this.correctCount + this.incorrectCount) / this.totalWords) * 100) 
+                        : 0;
+                }
+            },
+            methods: {
+                loadWords() {
+                    if (!this.selectedFile) return;
+                    
+                    this.words = [];
+                    this.gameStarted = false;
+                    this.correctCount = 0;
+                    this.incorrectCount = 0;
+                    
+                    fetch(`dictionery/${this.selectedFile}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.words = data.words;
+                            this.shuffleWords();
+                        })
+                        .catch(error => {
+                            console.error('Error loading words:', error);
+                        });
+                },
+                shuffleWords() {
+                    // Fisher-Yates shuffle algorithm
+                    for (let i = this.words.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [this.words[i], this.words[j]] = [this.words[j], this.words[i]];
+                    }
+                },
+                startGame() {
+                    this.gameStarted = true;
+                    this.currentWordIndex = 0;
+                    this.showAnswer = false;
+                    this.correctCount = 0;
+                    this.incorrectCount = 0;
+                    this.reviewWords = [];
+                    this.lastResult = null;
+                },
+                toggleCard() {
+                    if (this.gameStarted) {
+                        this.showAnswer = !this.showAnswer;
+                    }
+                },
+                checkKnown(known) {
+                    this.showAnswer = true;
+                    
+                    if (known) {
+                        this.correctCount++;
+                        this.lastResult = 'correct';
+                    } else {
+                        this.incorrectCount++;
+                        this.lastResult = 'incorrect';
+                        this.reviewWords.push(this.currentWord);
+                    }
+                    
+                    // Automatically move to next word after a delay
+                    setTimeout(() => {
+                        if (this.currentWordIndex < this.words.length - 1) {
+                            this.nextWord();
+                        } else {
+                            this.finishGame();
+                        }
+                    }, 1000);
+                },
+                nextWord() {
+                    this.lastResult = null;
+                    
+                    if (this.currentWordIndex < this.words.length - 1) {
+                        this.currentWordIndex++;
+                        this.showAnswer = false;
+                    } else {
+                        this.finishGame();
+                    }
+                },
+                finishGame() {
+                    if (this.reviewWords.length > 0) {
+                        // If there are words to review, start a review session
+                        this.words = [...this.reviewWords];
+                        this.reviewWords = [];
+                        this.currentWordIndex = 0;
+                        this.showAnswer = false;
+                        alert('בואו נחזור על המילים שלא ידעת');
+                    } else {
+                        // Game completely finished
+                        alert(`סיימת את המשחק! תוצאה: ${this.correctCount} מתוך ${this.totalWords} נכונות`);
+                        this.gameStarted = false;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
