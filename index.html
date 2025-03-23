@@ -3,295 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק זיכרון ארמית-עברית</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <title>ארמית-עברית מילון</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             background-color: #f5f5f5;
             color: #333;
             direction: rtl;
-            padding: 20px;
-            max-width: 100%;
-            overflow-x: hidden;
         }
-        .container {
+
+        #app {
             max-width: 600px;
             margin: 0 auto;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
-        h1 {
+
+        .header {
             text-align: center;
             margin-bottom: 20px;
-            color: #2c3e50;
         }
+
         .file-selector {
             margin-bottom: 20px;
-            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+
         .file-selector select {
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
             width: 100%;
-            max-width: 300px;
-            font-size: 16px;
-        }
-        .game-container {
-            margin-top: 20px;
-        }
-        .card {
-            background-color: #3498db;
-            color: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 24px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-3px);
-        }
-        .card.flipped {
-            background-color: #2ecc71;
-        }
-        .card.correct {
-            background-color: #27ae60;
-        }
-        .card.incorrect {
-            background-color: #e74c3c;
-        }
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .stats {
-            text-align: center;
-            margin-top: 20px;
             padding: 10px;
-            background-color: #f8f9fa;
+            font-size: 16px;
+            border: 1px solid #ddd;
             border-radius: 5px;
         }
+
+        .word-groups {
+            margin-bottom: 20px;
+        }
+
+        .group-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .group-btn {
+            padding: 10px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .group-btn.selected {
+            background: #2E7D32;
+        }
+
+        .word-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .word-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .word-card:active {
+            transform: translateY(0);
+        }
+
+        .word {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .translation {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .know-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .unknown-btn {
+            background: #f44336;
+            color: white;
+        }
+
         .progress-bar {
             height: 10px;
-            background-color: #ecf0f1;
+            background: #ddd;
             border-radius: 5px;
-            margin-top: 10px;
+            margin-bottom: 20px;
             overflow: hidden;
         }
+
         .progress {
             height: 100%;
-            background-color: #3498db;
-            width: 0%;
-            transition: width 0.3s ease;
+            background: #4CAF50;
+            transition: width 0.3s;
         }
-        @media (max-width: 480px) {
-            .container {
-                padding: 15px;
-            }
-            .card {
-                padding: 15px;
-                font-size: 20px;
-            }
-            button {
-                padding: 8px 15px;
-                font-size: 14px;
-            }
+
+        .statistics {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div id="app" class="container">
-        <h1>משחק זיכרון ארמית-עברית</h1>
-        
+    <div id="app">
+        <div class="header">
+            <h1>מילון ארמית-עברית</h1>
+        </div>
+
         <div class="file-selector">
-            <select v-model="selectedFile" @change="loadWords">
-                <option value="">בחר קובץ מילים</option>
-                <option value="dic1.json">קובץ 1</option>
-                <option value="dic2.json">קובץ 2</option>
-                <option value="dic3.json">קובץ 3</option>
-                <option value="dic4.json">קובץ 4</option>
-                <option value="dic5.json">קובץ 5</option>
-                <option value="dic6.json">קובץ 6</option>
+            <select v-model="selectedFile" @change="loadDictionary">
+                <option value="">בחר קובץ מילון</option>
+                <option v-for="n in 6" :key="n" :value="'dic' + n">מילון {{n}}</option>
             </select>
         </div>
-        
-        <div class="game-container" v-if="gameStarted">
-            <div class="stats">
-                <div>מילים נכונות: {{ correctCount }} / {{ totalWords }}</div>
+
+        <div v-if="words.length" class="word-groups">
+            <div class="group-selector">
+                <button 
+                    v-for="n in numberOfGroups" 
+                    :key="n"
+                    :class="['group-btn', { selected: selectedGroup === n }]"
+                    @click="selectGroup(n)"
+                >
+                    {{n}}
+                </button>
+            </div>
+
+            <div v-if="selectedGroup" class="learning-area">
                 <div class="progress-bar">
-                    <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
+                    <div class="progress" :style="{ width: progress + '%' }"></div>
+                </div>
+
+                <div class="statistics">
+                    נותרו: {{ currentGroupWords.length }} מילים | לא ידועות: {{ unknownWords.length }}
+                </div>
+
+                <template v-if="currentWord">
+                    <div class="word-card" @click="toggleTranslation">
+                        <div class="word">{{ currentWord.aramic }}</div>
+                        <div v-if="showTranslation" class="translation">{{ currentWord.hebrew }}</div>
+                    </div>
+                    <div class="control-buttons">
+                        <button class="know-btn" @click="handleKnown">ידעתי</button>
+                        <button class="unknown-btn" @click="handleUnknown">לא ידעתי</button>
+                    </div>
+                </template>
+
+                <div v-if="!currentWord && unknownWords.length" class="word-card">
+                    <h3>סיימת! האם תרצה לחזור על המילים הלא ידועות?</h3>
+                    <button class="know-btn" @click="reviewUnknown">כן, חזור על מילים לא ידועות</button>
+                </div>
+
+                <div v-if="!currentWord && !unknownWords.length" class="word-card">
+                    <h3>כל הכבוד! סיימת את הקבוצה!</h3>
                 </div>
             </div>
-            
-            <div class="card" 
-                 :class="{ 'flipped': showAnswer, 'correct': lastResult === 'correct', 'incorrect': lastResult === 'incorrect' }"
-                 @click="toggleCard">
-                <div v-if="!showAnswer">{{ currentWord.aramic }}</div>
-                <div v-else>{{ currentWord.hebrew }}</div>
-            </div>
-            
-            <div class="controls">
-                <button @click="checkKnown(false)" :disabled="!gameStarted">לא ידעתי</button>
-                <button @click="nextWord" :disabled="!showAnswer">הבא</button>
-                <button @click="checkKnown(true)" :disabled="!gameStarted">ידעתי</button>
-            </div>
-        </div>
-        
-        <div v-else-if="selectedFile && words.length > 0" class="game-container">
-            <button @click="startGame">התחל משחק</button>
-        </div>
-        
-        <div v-else-if="selectedFile && words.length === 0" class="game-container">
-            <p>טוען מילים...</p>
-        </div>
-        
-        <div v-else class="game-container">
-            <p>בחר קובץ מילים כדי להתחיל</p>
         </div>
     </div>
 
     <script>
-        new Vue({
-            el: '#app',
-            data: {
-                selectedFile: '',
-                words: [],
-                currentWordIndex: 0,
-                showAnswer: false,
-                gameStarted: false,
-                correctCount: 0,
-                incorrectCount: 0,
-                lastResult: null,
-                reviewWords: []
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    selectedFile: '',
+                    words: [],
+                    selectedGroup: null,
+                    currentGroupWords: [],
+                    unknownWords: [],
+                    showTranslation: false,
+                    wordsPerGroup: 10
+                }
             },
             computed: {
+                numberOfGroups() {
+                    return Math.ceil(this.words.length / this.wordsPerGroup)
+                },
                 currentWord() {
-                    return this.words.length > 0 && this.currentWordIndex < this.words.length 
-                        ? this.words[this.currentWordIndex] 
-                        : { aramic: '', hebrew: '' };
+                    return this.currentGroupWords[0] || null
                 },
-                totalWords() {
-                    return this.words.length;
-                },
-                progressPercentage() {
-                    return this.totalWords > 0 
-                        ? Math.round(((this.correctCount + this.incorrectCount) / this.totalWords) * 100) 
-                        : 0;
+                progress() {
+                    if (!this.selectedGroup) return 0
+                    const totalWords = this.getGroupWords(this.selectedGroup).length
+                    const remainingWords = this.currentGroupWords.length
+                    return ((totalWords - remainingWords) / totalWords) * 100
                 }
             },
             methods: {
-                loadWords() {
-                    if (!this.selectedFile) return;
-                    
-                    this.words = [];
-                    this.gameStarted = false;
-                    this.correctCount = 0;
-                    this.incorrectCount = 0;
-                    
-                    fetch(`dictionery/${this.selectedFile}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            this.words = data.words;
-                            this.shuffleWords();
-                        })
-                        .catch(error => {
-                            console.error('Error loading words:', error);
-                        });
-                },
-                shuffleWords() {
-                    // Fisher-Yates shuffle algorithm
-                    for (let i = this.words.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [this.words[i], this.words[j]] = [this.words[j], this.words[i]];
+                async loadDictionary() {
+                    if (!this.selectedFile) return
+                    try {
+                        const response = await fetch(`dictionery/${this.selectedFile}.json`)
+                        const data = await response.json()
+                        this.words = data.words
+                        this.selectedGroup = null
+                        this.currentGroupWords = []
+                        this.unknownWords = []
+                    } catch (error) {
+                        console.error('Error loading dictionary:', error)
+                        alert('שגיאה בטעינת המילון')
                     }
                 },
-                startGame() {
-                    this.gameStarted = true;
-                    this.currentWordIndex = 0;
-                    this.showAnswer = false;
-                    this.correctCount = 0;
-                    this.incorrectCount = 0;
-                    this.reviewWords = [];
-                    this.lastResult = null;
+                getGroupWords(groupNumber) {
+                    const startIndex = (groupNumber - 1) * this.wordsPerGroup
+                    return this.words.slice(startIndex, startIndex + this.wordsPerGroup)
                 },
-                toggleCard() {
-                    if (this.gameStarted) {
-                        this.showAnswer = !this.showAnswer;
-                    }
+                selectGroup(groupNumber) {
+                    this.selectedGroup = groupNumber
+                    this.currentGroupWords = [...this.getGroupWords(groupNumber)]
+                    this.unknownWords = []
+                    this.showTranslation = false
                 },
-                checkKnown(known) {
-                    this.showAnswer = true;
-                    
-                    if (known) {
-                        this.correctCount++;
-                        this.lastResult = 'correct';
-                    } else {
-                        this.incorrectCount++;
-                        this.lastResult = 'incorrect';
-                        this.reviewWords.push(this.currentWord);
-                    }
-                    
-                    // Automatically move to next word after a delay
-                    setTimeout(() => {
-                        if (this.currentWordIndex < this.words.length - 1) {
-                            this.nextWord();
-                        } else {
-                            this.finishGame();
-                        }
-                    }, 1000);
+                toggleTranslation() {
+                    this.showTranslation = !this.showTranslation;
                 },
-                nextWord() {
-                    this.lastResult = null;
-                    
-                    if (this.currentWordIndex < this.words.length - 1) {
-                        this.currentWordIndex++;
-                        this.showAnswer = false;
-                    } else {
-                        this.finishGame();
-                    }
+                handleKnown() {
+                    this.currentGroupWords.shift();
+                    this.showTranslation = false;
                 },
-                finishGame() {
-                    if (this.reviewWords.length > 0) {
-                        // If there are words to review, start a review session
-                        this.words = [...this.reviewWords];
-                        this.reviewWords = [];
-                        this.currentWordIndex = 0;
-                        this.showAnswer = false;
-                        alert('בואו נחזור על המילים שלא ידעת');
-                    } else {
-                        // Game completely finished
-                        alert(`סיימת את המשחק! תוצאה: ${this.correctCount} מתוך ${this.totalWords} נכונות`);
-                        this.gameStarted = false;
+                handleUnknown() {
+                    const word = this.currentGroupWords.shift();
+                    if (word) {
+                        this.unknownWords.push(word);
                     }
+                    this.showTranslation = false;
+                },
+                reviewUnknown() {
+                    this.currentGroupWords = [...this.unknownWords]
+                    this.unknownWords = []
+                    this.showTranslation = false
                 }
             }
-        });
+        }).mount('#app')
     </script>
 </body>
 </html>
